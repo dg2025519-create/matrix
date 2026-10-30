@@ -73,24 +73,171 @@ DNA 복제 과정 등에서 돌연변이가 일어나면 특정 염기가 다른
 # ---------- 2 ----------
 elif page.startswith("2"):
     st.header("2. 관련 개념 이해하기")
+    st.write("이 탐구에 쓰이는 수학 개념을 하나씩 정리합니다. 순서대로 읽으면 3단계 계산이 자연스럽게 이해됩니다.")
 
-    st.subheader("2-1. 마르코프 체인")
-    st.write("""
-계산을 간단히 하기 위해 **A와 G 두 염기만** 고려합니다.
-현재 상태만 알면 다음 상태의 확률을 계산할 수 있다고 가정하는 것이 마르코프 체인의 핵심입니다.
+    tabs = st.tabs(["① 마르코프 체인", "② 행렬과 벡터", "③ 행렬의 곱셈",
+                    "④ 전치행렬", "⑤ 전이행렬", "⑥ 빈도 벡터와 세대 계산", "⑦ 정상 분포"])
+
+    # ---- ① 마르코프 체인 ----
+    with tabs[0]:
+        st.subheader("마르코프 체인 (Markov chain)")
+        st.write("""
+**상태(state)** 는 시스템이 가질 수 있는 상황입니다. 이 탐구에서는 한 위치의 염기가
+**A인 상태**, **G인 상태** 두 가지입니다. (계산을 간단히 하려고 A·G만 고려합니다.)
+
+마르코프 체인은 **다음 상태가 오직 현재 상태에만 의존**한다고 가정하는 확률 모델입니다.
+과거에 어떤 염기였는지는 상관없고, 지금 무엇인지만 알면 다음 세대의 확률을 계산할 수 있습니다.
+이 성질을 **마르코프 성질**이라고 합니다.
 """)
+        st.latex(r"P(X_{n+1}\mid X_n, X_{n-1}, \dots, X_0)=P(X_{n+1}\mid X_n)")
+        st.caption("읽는 법: 다음 상태의 확률은 지금까지의 모든 과거를 알 때나, 현재만 알 때나 같다.")
+        st.info("예: 오늘 날씨만 알면 내일 비 올 확률을 구할 수 있다고 보는 것과 같은 아이디어입니다.")
 
-    st.subheader("2-2. 전이 확률 행렬")
-    st.table(pd.DataFrame({"다음 세대 A": [0.8, 0.3], "다음 세대 G": [0.2, 0.7]},
-                          index=["현재 A", "현재 G"]))
-    st.latex(r"M=\begin{pmatrix}0.8&0.2\\0.3&0.7\end{pmatrix}")
-    st.write("각 행의 합은 1입니다. 현재 A인 염기는 다음 세대에 A 또는 G가 되기 때문입니다.")
-    st.warning("이 행렬은 실제 돌연변이율 측정값이 아니라, 수학적 원리를 분석하기 위한 **가상의 확률**입니다.")
+    # ---- ② 행렬과 벡터 ----
+    with tabs[1]:
+        st.subheader("행렬(matrix)과 벡터(vector)")
+        st.write("""
+**행렬**은 수를 직사각형 모양으로 배열한 것입니다. 가로줄을 **행(row)**, 세로줄을 **열(column)** 이라 합니다.
+행이 $m$개, 열이 $n$개이면 $m\\times n$ 행렬이라 합니다.
+""")
+        st.latex(r"A=\begin{pmatrix}a_{11}&a_{12}\\a_{21}&a_{22}\end{pmatrix}\quad (2\times2\ \text{행렬})")
+        st.write("$a_{ij}$는 **i행 j열** 의 성분입니다. 예를 들어 $a_{12}$는 1행 2열의 수입니다.")
 
-    st.subheader("2-3. 염기 빈도 벡터")
-    st.latex(r"v_0=\begin{pmatrix}0.9\\0.1\end{pmatrix}")
-    st.latex(r"v_1 = M^{T} v_0")
-    st.write("빈도 벡터를 열벡터로 정의했기 때문에 전치행렬 $M^T$를 곱합니다.")
+        st.write("**열벡터**는 열이 1개인 행렬(세로로 쓴 수의 나열), **행벡터**는 행이 1개인 행렬(가로로 쓴 수의 나열)입니다.")
+        c1, c2 = st.columns(2)
+        c1.latex(r"\text{열벡터: }\ v=\begin{pmatrix}0.9\\0.1\end{pmatrix}\ (2\times1)")
+        c2.latex(r"\text{행벡터: }\ v^{T}=\begin{pmatrix}0.9&0.1\end{pmatrix}\ (1\times2)")
+        st.info("이 탐구에서는 염기 빈도를 **열벡터**로 씁니다. 위쪽 성분이 A의 빈도, 아래쪽 성분이 G의 빈도입니다.")
+
+    # ---- ③ 행렬의 곱셈 ----
+    with tabs[2]:
+        st.subheader("행렬의 곱셈")
+        st.write("""
+행렬 곱은 **(왼쪽 행렬의 행) × (오른쪽 행렬의 열)** 을 성분끼리 곱해 더하는 방식입니다.
+2×2 행렬과 2×1 열벡터의 곱은 다음과 같습니다.
+""")
+        st.latex(r"""
+\begin{pmatrix}a&b\\c&d\end{pmatrix}
+\begin{pmatrix}x\\y\end{pmatrix}
+=\begin{pmatrix}ax+by\\cx+dy\end{pmatrix}
+""")
+        st.write("**수치 예시**")
+        st.latex(r"""
+\begin{pmatrix}0.8&0.3\\0.2&0.7\end{pmatrix}
+\begin{pmatrix}0.9\\0.1\end{pmatrix}
+=\begin{pmatrix}0.8\times0.9+0.3\times0.1\\0.2\times0.9+0.7\times0.1\end{pmatrix}
+=\begin{pmatrix}0.75\\0.25\end{pmatrix}
+""")
+        st.warning("곱셈이 가능하려면 **왼쪽 행렬의 열 수 = 오른쪽 행렬의 행 수** 여야 합니다. 또한 행렬 곱은 순서를 바꾸면 결과가 달라질 수 있습니다.")
+
+    # ---- ④ 전치행렬 ----
+    with tabs[3]:
+        st.subheader("전치행렬 (transpose)")
+        st.write("""
+전치행렬은 **행과 열을 서로 바꾼 행렬**입니다. 기호는 $M^T$로 씁니다.
+$i$행 $j$열의 성분이 $j$행 $i$열로 이동합니다. 대각선(왼쪽 위 → 오른쪽 아래)을 기준으로 뒤집는 것과 같습니다.
+""")
+        st.latex(r"""
+M=\begin{pmatrix}0.8&0.2\\0.3&0.7\end{pmatrix}
+\quad\Longrightarrow\quad
+M^{T}=\begin{pmatrix}0.8&0.3\\0.2&0.7\end{pmatrix}
+""")
+        st.write("대각선 위의 성분(0.8, 0.7)은 그대로이고, 나머지 두 성분(0.2와 0.3)의 위치가 서로 바뀝니다.")
+
+        st.markdown("**왜 이 탐구에서 전치행렬이 필요할까?**")
+        st.write("""
+전이행렬 $M$은 **행 = 현재 상태, 열 = 다음 상태** 로 정의했습니다. 예를 들어 $M$의 1행 2열(0.2)은
+"현재 A → 다음 G"의 확률입니다. 그런데 다음 세대의 A 빈도를 구하려면
+**"다음 상태가 A"인 확률들(= M의 1열)** 을 현재 빈도와 곱해 더해야 합니다.
+
+$M$의 **열**을 **행**으로 바꿔 주면 위에서 배운 "행 × 열벡터" 곱셈을 그대로 쓸 수 있습니다. 그래서 $M^T$를 곱합니다.
+""")
+        st.latex(r"""
+\underbrace{\begin{pmatrix}0.8&0.3\\0.2&0.7\end{pmatrix}}_{M^{T}}
+\underbrace{\begin{pmatrix}A\text{의 빈도}\\G\text{의 빈도}\end{pmatrix}}_{v_n}
+=\begin{pmatrix}0.8\,A+0.3\,G\\0.2\,A+0.7\,G\end{pmatrix}
+""")
+        st.caption("첫 줄 = (A→A 확률)×A빈도 + (G→A 확률)×G빈도 = 다음 세대 A의 빈도")
+
+        st.markdown("**직접 확인해 보기**")
+        cc = st.columns(4)
+        m11 = cc[0].number_input("M의 1행1열", 0.0, 1.0, 0.8, 0.1, key="t11")
+        m12 = cc[1].number_input("M의 1행2열", 0.0, 1.0, 0.2, 0.1, key="t12")
+        m21 = cc[2].number_input("M의 2행1열", 0.0, 1.0, 0.3, 0.1, key="t21")
+        m22 = cc[3].number_input("M의 2행2열", 0.0, 1.0, 0.7, 0.1, key="t22")
+        st.latex(rf"M=\begin{{pmatrix}}{m11}&{m12}\\{m21}&{m22}\end{{pmatrix}}"
+                 rf"\ \Rightarrow\ M^T=\begin{{pmatrix}}{m11}&{m21}\\{m12}&{m22}\end{{pmatrix}}")
+
+    # ---- ⑤ 전이행렬 ----
+    with tabs[4]:
+        st.subheader("전이확률행렬 (transition matrix)")
+        st.write("""
+상태 사이를 이동할 **확률**을 모아 놓은 행렬입니다. $i$행 $j$열의 성분 $p_{ij}$는
+**"현재 상태 $i$에서 다음 상태 $j$로 바뀔 확률"** 입니다.
+""")
+        st.table(pd.DataFrame({"다음 A": ["p_AA = 0.8", "p_GA = 0.3"],
+                               "다음 G": ["p_AG = 0.2", "p_GG = 0.7"]},
+                              index=["현재 A", "현재 G"]))
+        st.latex(r"M=\begin{pmatrix}p_{AA}&p_{AG}\\p_{GA}&p_{GG}\end{pmatrix}=\begin{pmatrix}0.8&0.2\\0.3&0.7\end{pmatrix}")
+
+        st.markdown("**전이행렬의 두 가지 조건**")
+        st.markdown("""
+1. 모든 성분은 확률이므로 **0 이상 1 이하**
+2. **각 행의 합은 1** : 현재 A인 염기는 다음 세대에 반드시 A 또는 G가 되므로
+   $p_{AA}+p_{AG}=1$, $p_{GA}+p_{GG}=1$
+""")
+        st.warning("행의 합이 1이지, 열의 합이 1인 것은 아닙니다. 위 행렬의 1열 합은 0.8+0.3=1.1입니다.")
+        st.write("이런 조건을 만족하는 행렬을 **확률행렬(stochastic matrix)** 또는 **행 확률행렬**이라고 합니다.")
+
+    # ---- ⑥ 빈도 벡터와 세대 계산 ----
+    with tabs[5]:
+        st.subheader("염기 빈도 벡터와 세대 계산")
+        st.write("""
+집단에서 A와 G가 차지하는 비율을 열벡터로 나타낸 것이 **염기 빈도 벡터**입니다.
+비율이므로 성분의 합은 항상 1입니다.
+""")
+        st.latex(r"v_n=\begin{pmatrix}a_n\\g_n\end{pmatrix},\qquad a_n+g_n=1")
+        st.write("한 세대가 지날 때마다 전치행렬을 곱합니다.")
+        st.latex(r"v_{n+1}=M^{T}v_n")
+        st.write("이를 반복하면 $n$세대 뒤의 빈도는 다음과 같이 쓸 수 있습니다.")
+        st.latex(r"v_n=(M^{T})^{n}\,v_0")
+        st.caption("$(M^T)^n$은 $M^T$를 n번 곱한 행렬입니다.")
+
+        st.markdown("**직접 계산해 보기**")
+        a_in = st.slider("현재 A 빈도", 0.0, 1.0, 0.9, 0.05, key="vin")
+        g_in = 1 - a_in
+        a_out = 0.8 * a_in + 0.3 * g_in
+        g_out = 0.2 * a_in + 0.7 * g_in
+        st.latex(rf"""
+\begin{{pmatrix}}0.8&0.3\\0.2&0.7\end{{pmatrix}}
+\begin{{pmatrix}}{a_in:.2f}\\{g_in:.2f}\end{{pmatrix}}
+=\begin{{pmatrix}}{a_out:.3f}\\{g_out:.3f}\end{{pmatrix}}
+""")
+        st.caption("빈도의 합이 계속 1로 유지되는 것을 확인해 보세요. (행의 합이 1인 전이행렬을 썼기 때문입니다.)")
+
+    # ---- ⑦ 정상 분포 ----
+    with tabs[6]:
+        st.subheader("정상 분포 (stationary distribution)")
+        st.write("전이행렬을 한 번 더 적용해도 **변하지 않는 빈도 벡터** $\\pi$를 정상 분포라 합니다.")
+        st.latex(r"M^{T}\pi=\pi")
+        st.write("""
+선형대수 용어로는 $M^T$의 **고유값 1에 대응하는 고유벡터**(성분의 합을 1로 맞춘 것)입니다.
+고등학교 수준에서는 "한 번 곱해도 그대로인 벡터"로 이해하면 충분합니다.
+""")
+        st.markdown("**2×2 전이행렬의 정상 분포 공식**")
+        st.latex(r"M=\begin{pmatrix}1-p&p\\q&1-q\end{pmatrix}\ \Rightarrow\ \pi=\begin{pmatrix}\dfrac{q}{p+q}\\[2mm]\dfrac{p}{p+q}\end{pmatrix}")
+        st.caption("p = A→G 확률, q = G→A 확률. p=0.2, q=0.3이면 A는 0.3/0.5 = 0.6")
+
+        st.markdown("**직접 확인: $M^T\\pi=\\pi$ 인가?**")
+        pi = np.array([0.6, 0.4])
+        Mt = np.array([[0.8, 0.3], [0.2, 0.7]])
+        st.latex(rf"""
+\begin{{pmatrix}}0.8&0.3\\0.2&0.7\end{{pmatrix}}
+\begin{{pmatrix}}0.6\\0.4\end{{pmatrix}}
+=\begin{{pmatrix}}{(Mt@pi)[0]:.2f}\\{(Mt@pi)[1]:.2f}\end{{pmatrix}}
+=\begin{{pmatrix}}0.6\\0.4\end{{pmatrix}}
+""")
+        st.success("계산 결과가 원래 벡터와 같으므로 (0.6, 0.4)는 정상 분포입니다.")
 
 # ---------- 3 ----------
 elif page.startswith("3"):
