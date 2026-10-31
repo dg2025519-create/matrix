@@ -78,7 +78,6 @@ elif page.startswith("2"):
     tabs = st.tabs(["① 마르코프 체인", "② 행렬과 벡터", "③ 행렬의 곱셈",
                     "④ 전치행렬", "⑤ 전이행렬", "⑥ 빈도 벡터와 세대 계산", "⑦ 정상 분포"])
 
-    # ---- ① 마르코프 체인 ----
     with tabs[0]:
         st.subheader("마르코프 체인 (Markov chain)")
         st.write("""
@@ -93,7 +92,6 @@ elif page.startswith("2"):
         st.caption("읽는 법: 다음 상태의 확률은 지금까지의 모든 과거를 알 때나, 현재만 알 때나 같다.")
         st.info("예: 오늘 날씨만 알면 내일 비 올 확률을 구할 수 있다고 보는 것과 같은 아이디어입니다.")
 
-    # ---- ② 행렬과 벡터 ----
     with tabs[1]:
         st.subheader("행렬(matrix)과 벡터(vector)")
         st.write("""
@@ -109,7 +107,6 @@ elif page.startswith("2"):
         c2.latex(r"\text{행벡터: }\ v^{T}=\begin{pmatrix}0.9&0.1\end{pmatrix}\ (1\times2)")
         st.info("이 탐구에서는 염기 빈도를 **열벡터**로 씁니다. 위쪽 성분이 A의 빈도, 아래쪽 성분이 G의 빈도입니다.")
 
-    # ---- ③ 행렬의 곱셈 ----
     with tabs[2]:
         st.subheader("행렬의 곱셈")
         st.write("""
@@ -130,7 +127,6 @@ elif page.startswith("2"):
 """)
         st.warning("곱셈이 가능하려면 **왼쪽 행렬의 열 수 = 오른쪽 행렬의 행 수** 여야 합니다. 또한 행렬 곱은 순서를 바꾸면 결과가 달라질 수 있습니다.")
 
-    # ---- ④ 전치행렬 ----
     with tabs[3]:
         st.subheader("전치행렬 (transpose)")
         st.write("""
@@ -168,7 +164,6 @@ $M$의 **열**을 **행**으로 바꿔 주면 위에서 배운 "행 × 열벡터
         st.latex(rf"M=\begin{{pmatrix}}{m11}&{m12}\\{m21}&{m22}\end{{pmatrix}}"
                  rf"\ \Rightarrow\ M^T=\begin{{pmatrix}}{m11}&{m21}\\{m12}&{m22}\end{{pmatrix}}")
 
-    # ---- ⑤ 전이행렬 ----
     with tabs[4]:
         st.subheader("전이확률행렬 (transition matrix)")
         st.write("""
@@ -189,7 +184,6 @@ $M$의 **열**을 **행**으로 바꿔 주면 위에서 배운 "행 × 열벡터
         st.warning("행의 합이 1이지, 열의 합이 1인 것은 아닙니다. 위 행렬의 1열 합은 0.8+0.3=1.1입니다.")
         st.write("이런 조건을 만족하는 행렬을 **확률행렬(stochastic matrix)** 또는 **행 확률행렬**이라고 합니다.")
 
-    # ---- ⑥ 빈도 벡터와 세대 계산 ----
     with tabs[5]:
         st.subheader("염기 빈도 벡터와 세대 계산")
         st.write("""
@@ -215,7 +209,6 @@ $M$의 **열**을 **행**으로 바꿔 주면 위에서 배운 "행 × 열벡터
 """)
         st.caption("빈도의 합이 계속 1로 유지되는 것을 확인해 보세요. (행의 합이 1인 전이행렬을 썼기 때문입니다.)")
 
-    # ---- ⑦ 정상 분포 ----
     with tabs[6]:
         st.subheader("정상 분포 (stationary distribution)")
         st.write("전이행렬을 한 번 더 적용해도 **변하지 않는 빈도 벡터** $\\pi$를 정상 분포라 합니다.")
@@ -363,30 +356,54 @@ elif page.startswith("8"):
 # ---------- 시뮬레이터 ----------
 else:
     st.header("🧪 직접 해보는 시뮬레이터")
+    st.write("슬라이더를 움직여 **수렴하지 않는 경우**를 찾아보세요. "
+             "힌트: 수렴 여부는 λ = 1 − p − q 의 절댓값이 결정합니다.")
+
+    preset = st.radio("빠른 설정", ["직접 조절", "탐구 기본값 (0.2, 0.3)", "진동하며 수렴 (0.7, 0.8)",
+                                  "수렴 안 함: 완전 교환 (1, 1)", "수렴 안 함: 변화 없음 (0, 0)"],
+                      horizontal=True)
+    presets = {"탐구 기본값 (0.2, 0.3)": (0.2, 0.3), "진동하며 수렴 (0.7, 0.8)": (0.7, 0.8),
+               "수렴 안 함: 완전 교환 (1, 1)": (1.0, 1.0), "수렴 안 함: 변화 없음 (0, 0)": (0.0, 0.0)}
+
     c1, c2, c3 = st.columns(3)
-    p_ag = c1.slider("A → G 확률", 0.0, 1.0, 0.2, 0.01)
-    p_ga = c2.slider("G → A 확률", 0.0, 1.0, 0.3, 0.01)
+    if preset == "직접 조절":
+        p_ag = c1.slider("A → G 확률", 0.0, 1.0, 0.2, 0.01)
+        p_ga = c2.slider("G → A 확률", 0.0, 1.0, 0.3, 0.01)
+    else:
+        p_ag, p_ga = presets[preset]
+        c1.metric("A → G 확률", p_ag)
+        c2.metric("G → A 확률", p_ga)
     a0 = c3.slider("초기 A 빈도", 0.0, 1.0, 0.9, 0.01)
     n = st.slider("세대 수", 1, 50, 20)
 
     st.latex(rf"M=\begin{{pmatrix}}{1-p_ag:.2f}&{p_ag:.2f}\\{p_ga:.2f}&{1-p_ga:.2f}\end{{pmatrix}}")
 
+    lam = 1 - p_ag - p_ga
     sd = stationary(p_ag, p_ga)
     df = simulate(p_ag, p_ga, a0, n)
+
     if sd is None:
-        st.error("두 확률이 모두 0이면 어떤 염기도 바뀌지 않아 정상 분포가 유일하지 않습니다. 초기 빈도가 그대로 유지됩니다.")
+        st.error("p = q = 0 (λ = 1): 어떤 염기도 바뀌지 않아 빈도가 초기값 그대로입니다. "
+                 "정상 분포가 유일하지 않고, 초기값에 따라 결과가 달라집니다.")
         st.plotly_chart(line_chart([df], ["A 빈도"]), use_container_width=True)
     else:
         m1, m2, m3 = st.columns(3)
         m1.metric("정상 분포 A", f"{sd[0]*100:.2f}%")
         m2.metric("정상 분포 G", f"{sd[1]*100:.2f}%")
-        lam = 1 - p_ag - p_ga
-        m3.metric("수렴 속도 계수 (1−p−q)", f"{lam:.2f}")
+        m3.metric("λ = 1 − p − q", f"{lam:.2f}")
         st.plotly_chart(line_chart([df], ["A 빈도"], sd[0]), use_container_width=True)
-        if abs(lam) == 1:
-            st.warning("계수의 절댓값이 1이라 수렴하지 않습니다. (A→G와 G→A가 모두 1이면 매 세대 A와 G가 서로 바뀝니다.)")
+
+        if abs(lam + 1) < 1e-9:
+            if abs(a0 - 0.5) < 1e-9:
+                st.warning("p = q = 1 (λ = −1): 초기 A가 50%라서 우연히 계속 50%로 유지됩니다. "
+                           "초기값을 바꾸면 진동하는 것을 볼 수 있습니다.")
+            else:
+                st.error("p = q = 1 (λ = −1): 매 세대 A와 G가 완전히 뒤바뀌어 "
+                         "빈도가 두 값을 오가기만 하고 **수렴하지 않습니다.**")
         elif lam < 0:
-            st.info("계수가 음수이면 빈도가 정상값 주위를 오가며 진동하면서 수렴합니다.")
+            st.info("λ가 음수: 정상값 주위를 오가며 진동하지만 점점 줄어들어 수렴합니다.")
+        else:
+            st.success("0 ≤ λ < 1: 정상값으로 한쪽 방향으로 수렴합니다.")
         st.dataframe(df.round(4), hide_index=True, use_container_width=True)
 
 st.sidebar.markdown("---")
